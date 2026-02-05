@@ -48,6 +48,25 @@ def enquiry_list(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['DELETE'])
+def delete_enquiry(request, pk):
+    """Delete an enquiry"""
+    try:
+        enquiry = Enquiry.objects.get(id=pk)
+        enquiry.delete()
+        return Response({
+            "message": "Enquiry deleted successfully"
+        }, status=status.HTTP_204_NO_CONTENT)
+    except Enquiry.DoesNotExist:
+        return Response({
+            "error": "Enquiry not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # ============================================
 # FLIGHT VIEWS
 # ============================================

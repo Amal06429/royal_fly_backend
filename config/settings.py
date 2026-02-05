@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # local apps
     'flights',
     'login',
+    'whatsapp',
     
     
     
@@ -148,3 +149,5 @@ REST_FRAMEWORK = {
     ),
 }
 
+WHATSAPP_SECRET = "7b8ae820ecb39f8d173d57b51e1fce4c023e359e"
+WHATSAPP_ACCOUNT = "1761365422812b4ba287f5ee0bc9d43bbf5bbe87fb68fc4daea92d8"

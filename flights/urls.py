@@ -5,6 +5,7 @@ urlpatterns = [
     # Enquiry endpoints
     path('enquiries/', views.enquiry_list, name='enquiry-list'),
     path('enquiries/create/', views.create_enquiry, name='enquiry-create'),
+    path('enquiries/<int:pk>/', views.delete_enquiry, name='enquiry-delete'),
     
     # Flight endpoints
     path('flights/', views.flights_api, name='flights-list-create'),
@@ -13,4 +14,4 @@ urlpatterns = [
     
     # Dashboard endpoint
     path('dashboard/', views.DashboardAPIView.as_view(), name='dashboard'),
-]
+]   

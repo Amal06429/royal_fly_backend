@@ -21,5 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('login.urls')),
     path("api/", include("flights.urls")),
+    path("api/whatsapp/", include("whatsapp.urls")),
+
 
 ]
