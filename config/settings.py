@@ -14,16 +14,21 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-yl*)jzhw_fxnc0kxvd7cmssv83a&(zi($22euko7&@-=hgi0ec'
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+DEBUG = os.getenv("DEBUG") == "True"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
 
 ALLOWED_HOSTS = []
 
@@ -97,11 +102,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'royal_fly',
-        'USER': 'royal_fly',
-        'PASSWORD': '12345',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv("DB_PASSWORD"),
+        'HOST': os.getenv("DB_HOST"),
+        'PORT': os.getenv("DB_PORT"),
     }
 }
 
@@ -149,5 +154,5 @@ REST_FRAMEWORK = {
     ),
 }
 
-WHATSAPP_SECRET = "7b8ae820ecb39f8d173d57b51e1fce4c023e359e"
-WHATSAPP_ACCOUNT = "1761365422812b4ba287f5ee0bc9d43bbf5bbe87fb68fc4daea92d8"
+WHATSAPP_SECRET = os.getenv("WHATSAPP_SECRET")
+WHATSAPP_ACCOUNT = os.getenv("WHATSAPP_ACCOUNT")

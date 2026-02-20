@@ -16,7 +16,7 @@ class Enquiry(models.Model):
         db_table = 'enquiry'
         ordering = ['-created_at']
         verbose_name_plural = 'Enquiries'
-
+ 
     def __str__(self):
         return f"{self.name} - {self.from_city} → {self.to_city}"
 
@@ -27,7 +27,7 @@ class Enquiry(models.Model):
 class Flight(models.Model):
     trip_type = models.CharField(max_length=20)
     flight_type = models.CharField(max_length=20)
-
+       
     departure_code = models.CharField(max_length=3)
     departure_city = models.CharField(max_length=50)
 
@@ -39,7 +39,7 @@ class Flight(models.Model):
 
     return_date = models.DateField(null=True, blank=True)
     return_time = models.TimeField(null=True, blank=True)
-
+ 
     airline = models.CharField(max_length=50)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     seat_available = models.IntegerField()
@@ -53,3 +53,4 @@ class Flight(models.Model):
 
     def __str__(self):
         return f"{self.departure_city} ({self.departure_code}) → {self.destination_city} ({self.destination_code})"
+ 
