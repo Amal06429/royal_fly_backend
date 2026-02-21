@@ -30,7 +30,7 @@ DEBUG = os.getenv("DEBUG") == "True"
 # SECURITY WARNING: don't run with debug turned on in production!
 
 
-ALLOWED_HOSTS = ["royalfly.imcbs.com","www.royalfly.imcbs.com"]
+ALLOWED_HOSTS = ["royalfly.imcbs.com","www.royalfly.imcbs.com", "127.0.0.1", "localhost"]
 
 
 # Application definition
