@@ -1,10 +1,22 @@
-import requests
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+    print("Warning: requests module not installed. WhatsApp functionality disabled.")
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
 
 @api_view(["POST"])
 def send_ticket_whatsapp(request):
+    if not REQUESTS_AVAILABLE:
+        return Response({
+            "success": False,
+            "error": "WhatsApp functionality is disabled. Please install 'requests' module."
+        }, status=503)
+    
     data = request.data
 
     # Build WhatsApp message

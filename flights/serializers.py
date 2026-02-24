@@ -12,11 +12,21 @@ class EnquirySerializer(serializers.ModelSerializer):
             'name',
             'email',
             'phone',
-            'message',
             'from_city',
             'to_city',
+            'travel_date',
+            'notes',
+            'message',
+            'created_by',
             'created_at'
         ]
+        extra_kwargs = {
+            'email': {'required': False},
+            'travel_date': {'required': False},
+            'notes': {'required': False},
+            'message': {'required': False},
+            'created_by': {'required': False}
+        }
 
 
 

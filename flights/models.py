@@ -4,12 +4,20 @@ from django.db import models
 # ENQUIRY MODEL
 # ========================================
 class Enquiry(models.Model):
+    ENQUIRY_TYPE_CHOICES = [
+        ('customer', 'Customer'),
+        ('admin', 'Admin'),
+    ]
+    
     name = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20)
     from_city = models.CharField(max_length=50)
     to_city = models.CharField(max_length=50)
-    message = models.TextField(blank=True)
+    travel_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    message = models.TextField(blank=True)  # Keep for backward compatibility
+    created_by = models.CharField(max_length=10, choices=ENQUIRY_TYPE_CHOICES, default='customer')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
