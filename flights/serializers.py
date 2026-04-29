@@ -5,6 +5,8 @@ from .models import Flight, Enquiry
 # ENQUIRY SERIALIZER
 # ========================================
 class EnquirySerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
     class Meta:
         model = Enquiry
         fields = [
@@ -18,6 +20,8 @@ class EnquirySerializer(serializers.ModelSerializer):
             'notes',
             'message',
             'created_by',
+            'user',
+            'username',
             'created_at'
         ]
         extra_kwargs = {
@@ -25,7 +29,8 @@ class EnquirySerializer(serializers.ModelSerializer):
             'travel_date': {'required': False},
             'notes': {'required': False},
             'message': {'required': False},
-            'created_by': {'required': False}
+            'created_by': {'required': False},
+            'user': {'required': False}
         }
 
 
@@ -56,6 +61,8 @@ class FlightSerializer(serializers.ModelSerializer):
     )
 
     seatAvailable = serializers.IntegerField(source='seat_available')
+    createdBy = serializers.CharField(source='created_by', required=False)
+    creatorUsername = serializers.CharField(source='creator_user.username', read_only=True, required=False)
 
     class Meta:
         model = Flight
@@ -73,5 +80,7 @@ class FlightSerializer(serializers.ModelSerializer):
             'returnTime',
             'airline',
             'price',
-            'seatAvailable'
+            'seatAvailable',
+            'createdBy',
+            'creatorUsername'
         ]

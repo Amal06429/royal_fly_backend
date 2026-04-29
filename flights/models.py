@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # ========================================
 # ENQUIRY MODEL
@@ -18,6 +19,7 @@ class Enquiry(models.Model):
     notes = models.TextField(blank=True)
     message = models.TextField(blank=True)  # Keep for backward compatibility
     created_by = models.CharField(max_length=10, choices=ENQUIRY_TYPE_CHOICES, default='customer')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='enquiries')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -33,6 +35,11 @@ class Enquiry(models.Model):
 # FLIGHT MODEL
 # ========================================
 class Flight(models.Model):
+    FLIGHT_CREATOR_CHOICES = [
+        ('user', 'User'),
+        ('admin', 'Admin'),
+    ]
+    
     trip_type = models.CharField(max_length=20)
     flight_type = models.CharField(max_length=20)
        
@@ -52,6 +59,8 @@ class Flight(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     seat_available = models.IntegerField()
 
+    created_by = models.CharField(max_length=10, choices=FLIGHT_CREATOR_CHOICES, default='user')
+    creator_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_flights')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

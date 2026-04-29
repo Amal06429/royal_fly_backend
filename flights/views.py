@@ -19,7 +19,11 @@ def create_enquiry(request):
     serializer = EnquirySerializer(data=request.data)
 
     if serializer.is_valid():
-        serializer.save()
+        # Save with user if authenticated
+        if request.user and request.user.is_authenticated:
+            serializer.save(user=request.user)
+        else:
+            serializer.save()
         return Response(
             {
                 "message": "Enquiry submitted successfully",
@@ -56,7 +60,7 @@ def delete_enquiry(request, pk):
         enquiry.delete()
         return Response({
             "message": "Enquiry deleted successfully"
-        }, status=status.HTTP_204_NO_CONTENT)
+        }, status=status.HTTP_200_OK)
     except Enquiry.DoesNotExist:
         return Response({
             "error": "Enquiry not found"
@@ -87,12 +91,22 @@ def flights_api(request):
     
     elif request.method == 'POST':
         try:
-            serializer = FlightSerializer(data=request.data)
+            data = request.data.copy()
+            
+            # Set created_by and creator_user based on authentication
+            if request.user.is_authenticated:
+                data['created_by'] = 'admin'
+                creator_user = request.user
+            else:
+                data['created_by'] = 'user'
+                creator_user = None
+            
+            serializer = FlightSerializer(data=data)
             if serializer.is_valid():
-                serializer.save()
+                flight = serializer.save(creator_user=creator_user)
                 return Response({
                     "message": "Flight added successfully",
-                    "data": serializer.data
+                    "data": FlightSerializer(flight).data
                 }, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -132,7 +146,7 @@ def delete_flight(request, pk):
         flight.delete()
         return Response({
             "message": "Flight deleted successfully"
-        }, status=status.HTTP_204_NO_CONTENT)
+        }, status=status.HTTP_200_OK)
     except Flight.DoesNotExist:
         return Response({
             "error": "Flight not found"
