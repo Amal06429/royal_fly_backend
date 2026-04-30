@@ -2,6 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils import timezone
 from django.db.models import Sum
 
@@ -40,10 +43,16 @@ def create_enquiry(request):
 
 
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def enquiry_list(request):
-    """Get all enquiries"""
+    """Get enquiries based on logged-in user's role."""
     try:
-        enquiries = Enquiry.objects.all().order_by('-created_at')
+        if request.user.is_staff:
+            enquiries = Enquiry.objects.all().order_by('-created_at')
+        else:
+            enquiries = Enquiry.objects.filter(user=request.user).order_by('-created_at')
+
         serializer = EnquirySerializer(enquiries, many=True)
         return Response(serializer.data)
     except Exception as e:
@@ -53,10 +62,18 @@ def enquiry_list(request):
 
 
 @api_view(['DELETE', 'PATCH', 'PUT'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def enquiry_detail(request, pk):
     """Get, update (PATCH/PUT), or delete an enquiry"""
     try:
         enquiry = Enquiry.objects.get(id=pk)
+
+        # Non-admin users can access only their own enquiries.
+        if not request.user.is_staff and enquiry.user_id != request.user.id:
+            return Response({
+                "error": "You can only access your own enquiries"
+            }, status=status.HTTP_403_FORBIDDEN)
         
         if request.method == 'DELETE':
             enquiry.delete()
@@ -89,10 +106,18 @@ def enquiry_detail(request, pk):
 
 
 @api_view(['DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def delete_enquiry(request, pk):
     """Delete an enquiry"""
     try:
         enquiry = Enquiry.objects.get(id=pk)
+
+        if not request.user.is_staff and enquiry.user_id != request.user.id:
+            return Response({
+                "error": "You can only delete your own enquiries"
+            }, status=status.HTTP_403_FORBIDDEN)
+
         enquiry.delete()
         return Response({
             "message": "Enquiry deleted successfully"
@@ -108,10 +133,17 @@ def delete_enquiry(request, pk):
 
 
 @api_view(['PATCH', 'PUT'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def update_enquiry(request, pk):
     """Update an enquiry (partial update with PATCH, full update with PUT)"""
     try:
         enquiry = Enquiry.objects.get(id=pk)
+
+        if not request.user.is_staff and enquiry.user_id != request.user.id:
+            return Response({
+                "error": "You can only update your own enquiries"
+            }, status=status.HTTP_403_FORBIDDEN)
         
         # For PATCH, use partial=True; for PUT, use partial=False
         partial = request.method == 'PATCH'
@@ -146,7 +178,11 @@ def flights_api(request):
     
     if request.method == 'GET':
         try:
-            flights = Flight.objects.all().order_by('-created_at')
+            if request.user.is_authenticated and not request.user.is_staff:
+                flights = Flight.objects.filter(creator_user=request.user).order_by('-created_at')
+            else:
+                flights = Flight.objects.all().order_by('-created_at')
+
             serializer = FlightSerializer(flights, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -156,11 +192,16 @@ def flights_api(request):
     
     elif request.method == 'POST':
         try:
+            if not request.user.is_authenticated:
+                return Response({
+                    "error": "Authentication required"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+
             data = request.data.copy()
             
             # Set created_by and creator_user based on authentication
             if request.user.is_authenticated:
-                data['created_by'] = 'admin'
+                data['created_by'] = 'admin' if request.user.is_staff else 'user'
                 creator_user = request.user
             else:
                 data['created_by'] = 'user'
@@ -181,10 +222,18 @@ def flights_api(request):
 
 
 @api_view(['PUT'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def update_flight(request, pk):
     """Update a flight"""
     try:
         flight = Flight.objects.get(id=pk)
+
+        if not request.user.is_staff and flight.creator_user_id != request.user.id:
+            return Response({
+                "error": "You can only update your own tickets"
+            }, status=status.HTTP_403_FORBIDDEN)
+
         serializer = FlightSerializer(flight, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -204,10 +253,18 @@ def update_flight(request, pk):
 
 
 @api_view(['DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def delete_flight(request, pk):
     """Delete a flight"""
     try:
         flight = Flight.objects.get(id=pk)
+
+        if not request.user.is_staff and flight.creator_user_id != request.user.id:
+            return Response({
+                "error": "You can only delete your own tickets"
+            }, status=status.HTTP_403_FORBIDDEN)
+
         flight.delete()
         return Response({
             "message": "Flight deleted successfully"
@@ -226,29 +283,29 @@ def delete_flight(request, pk):
 # DASHBOARD VIEW
 # ============================================
 
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-
 class DashboardAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
-            total_flights = Flight.objects.count()
+            flights_qs = Flight.objects.all() if request.user.is_staff else Flight.objects.filter(creator_user=request.user)
+            enquiries_qs = Enquiry.objects.all() if request.user.is_staff else Enquiry.objects.filter(user=request.user)
 
-            total_seats = Flight.objects.aggregate(
+            total_flights = flights_qs.count()
+
+            total_seats = flights_qs.aggregate(
                 total=Sum('seat_available')
             )['total'] or 0
 
-            total_enquiries = Enquiry.objects.count()
+            total_enquiries = enquiries_qs.count()
 
             today = timezone.now().date()
-            today_enquiries = Enquiry.objects.filter(
+            today_enquiries = enquiries_qs.filter(
                 created_at__date=today
             ).count()
 
-            recent_enquiries_qs = Enquiry.objects.order_by('-created_at')[:5]
+            recent_enquiries_qs = enquiries_qs.order_by('-created_at')[:5]
             recent_enquiries = EnquirySerializer(
                 recent_enquiries_qs, many=True
             ).data

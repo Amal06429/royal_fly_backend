@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.db.models import Q
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -96,9 +98,23 @@ class UsersAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Get users created by current admin
+        # Backfill missing profiles for legacy deployment users.
         try:
-            user_profiles = UserProfile.objects.filter(created_by=request.user)
+            legacy_users = User.objects.filter(is_staff=False, userprofile__isnull=True)
+            for legacy_user in legacy_users:
+                UserProfile.objects.get_or_create(
+                    user=legacy_user,
+                    defaults={
+                        'created_by': None,
+                        'password_display': ''
+                    }
+                )
+
+            # Show users created by current admin + legacy users without ownership.
+            user_profiles = UserProfile.objects.filter(
+                Q(created_by=request.user) | Q(created_by__isnull=True),
+                user__is_staff=False
+            ).select_related('user').order_by('-user__date_joined')
             
             users_data = []
             for profile in user_profiles:
@@ -146,19 +162,22 @@ class UsersAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            is_staff=False
-        )
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                is_staff=False
+            )
 
-        # Create UserProfile with created_by and plaintext password
-        UserProfile.objects.create(
-            user=user,
-            created_by=request.user,
-            password_display=password
-        )
+            # Ensure profile is always present for newly created users.
+            UserProfile.objects.update_or_create(
+                user=user,
+                defaults={
+                    'created_by': request.user,
+                    'password_display': password
+                }
+            )
 
         return Response({
             "id": user.id,
@@ -199,7 +218,7 @@ class UserDetailAPIView(APIView):
             # Check if current admin created this user
             try:
                 profile = UserProfile.objects.get(user=user)
-                if profile.created_by != request.user:
+                if profile.created_by and profile.created_by != request.user:
                     return Response(
                         {"error": "You can only delete users you created"},
                         status=status.HTTP_403_FORBIDDEN
