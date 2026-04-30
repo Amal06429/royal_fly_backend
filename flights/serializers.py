@@ -19,6 +19,11 @@ class EnquirySerializer(serializers.ModelSerializer):
             'travel_date',
             'notes',
             'message',
+            'status',
+            'fare_type',
+            'sale_price',
+            'pnr',
+            'profit',
             'created_by',
             'user',
             'username',
@@ -29,6 +34,11 @@ class EnquirySerializer(serializers.ModelSerializer):
             'travel_date': {'required': False},
             'notes': {'required': False},
             'message': {'required': False},
+            'status': {'required': False},
+            'fare_type': {'required': False},
+            'sale_price': {'required': False},
+            'pnr': {'required': False},
+            'profit': {'required': False},
             'created_by': {'required': False},
             'user': {'required': False}
         }

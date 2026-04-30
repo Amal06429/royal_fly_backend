@@ -52,6 +52,42 @@ def enquiry_list(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['DELETE', 'PATCH', 'PUT'])
+def enquiry_detail(request, pk):
+    """Get, update (PATCH/PUT), or delete an enquiry"""
+    try:
+        enquiry = Enquiry.objects.get(id=pk)
+        
+        if request.method == 'DELETE':
+            enquiry.delete()
+            return Response({
+                "message": "Enquiry deleted successfully"
+            }, status=status.HTTP_200_OK)
+        
+        elif request.method in ['PATCH', 'PUT']:
+            # For PATCH, use partial=True; for PUT, use partial=False
+            partial = request.method == 'PATCH'
+            serializer = EnquirySerializer(enquiry, data=request.data, partial=partial)
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "message": "Enquiry updated successfully",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Enquiry.DoesNotExist:
+        return Response({
+            "error": "Enquiry not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['DELETE'])
 def delete_enquiry(request, pk):
     """Delete an enquiry"""
@@ -61,6 +97,35 @@ def delete_enquiry(request, pk):
         return Response({
             "message": "Enquiry deleted successfully"
         }, status=status.HTTP_200_OK)
+    except Enquiry.DoesNotExist:
+        return Response({
+            "error": "Enquiry not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PATCH', 'PUT'])
+def update_enquiry(request, pk):
+    """Update an enquiry (partial update with PATCH, full update with PUT)"""
+    try:
+        enquiry = Enquiry.objects.get(id=pk)
+        
+        # For PATCH, use partial=True; for PUT, use partial=False
+        partial = request.method == 'PATCH'
+        serializer = EnquirySerializer(enquiry, data=request.data, partial=partial)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Enquiry updated successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     except Enquiry.DoesNotExist:
         return Response({
             "error": "Enquiry not found"
