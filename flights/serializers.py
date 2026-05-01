@@ -24,6 +24,8 @@ class EnquirySerializer(serializers.ModelSerializer):
             'sale_price',
             'pnr',
             'profit',
+            'label_name',
+            'label_colour',
             'created_by',
             'user',
             'username',
@@ -39,6 +41,8 @@ class EnquirySerializer(serializers.ModelSerializer):
             'sale_price': {'required': False},
             'pnr': {'required': False},
             'profit': {'required': False},
+            'label_name': {'required': False},
+            'label_colour': {'required': False},
             'created_by': {'required': False},
             'user': {'required': False}
         }
