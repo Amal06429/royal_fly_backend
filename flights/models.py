@@ -21,7 +21,7 @@ class Enquiry(models.Model):
     phone = models.CharField(max_length=20)
     from_city = models.CharField(max_length=50)
     to_city = models.CharField(max_length=50)
-    travel_date = models.DateField(null=True, blank=True)
+    travel_date = models.CharField(max_length=255, null=True, blank=True)
     notes = models.TextField(blank=True)
     message = models.TextField(blank=True)  # Keep for backward compatibility
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
