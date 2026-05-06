@@ -8,8 +8,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils import timezone
 from django.db.models import Sum
 
-from .models import Flight, Enquiry
-from .serializers import FlightSerializer, EnquirySerializer
+from .models import Flight, Enquiry, Visa
+from .serializers import FlightSerializer, EnquirySerializer, VisaSerializer
 
 
 # ============================================
@@ -323,3 +323,85 @@ class DashboardAPIView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# ============================================
+# VISA VIEWS
+# ============================================
+
+@api_view(['GET', 'POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def visa_list(request):
+    """Get list of visas or create a new visa"""
+    try:
+        if request.method == 'GET':
+            # Admin sees all visas, regular users see only their own
+            if request.user.is_staff:
+                visas = Visa.objects.all().order_by('-created_at')
+            else:
+                visas = Visa.objects.filter(user=request.user).order_by('-created_at')
+            serializer = VisaSerializer(visas, many=True)
+            return Response(serializer.data)
+        
+        elif request.method == 'POST':
+            data = request.data.copy()
+            data['user'] = request.user.id
+            serializer = VisaSerializer(data=data)
+            
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                return Response({
+                    "message": "Visa record created successfully",
+                    "data": serializer.data
+                }, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def visa_detail(request, pk):
+    """Get, update, or delete a visa"""
+    try:
+        visa = Visa.objects.get(id=pk)
+        
+        # Admin can access any visa, regular users can only access their own
+        if not request.user.is_staff and visa.user_id != request.user.id:
+            return Response({
+                "error": "You can only access your own visa records"
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if request.method == 'GET':
+            serializer = VisaSerializer(visa)
+            return Response(serializer.data)
+        
+        elif request.method == 'PUT':
+            serializer = VisaSerializer(visa, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "message": "Visa record updated successfully",
+                    "data": serializer.data
+                })
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        elif request.method == 'DELETE':
+            visa.delete()
+            return Response({
+                "message": "Visa record deleted successfully"
+            }, status=status.HTTP_200_OK)
+    
+    except Visa.DoesNotExist:
+        return Response({
+            "error": "Visa record not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

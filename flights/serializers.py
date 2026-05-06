@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Flight, Enquiry
+from .models import Flight, Enquiry, Visa
 
 # ========================================
 # ENQUIRY SERIALIZER
@@ -98,3 +98,43 @@ class FlightSerializer(serializers.ModelSerializer):
             'createdBy',
             'creatorUsername'
         ]
+
+
+# ========================================
+# VISA SERIALIZER
+# ========================================
+class VisaSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = Visa
+        fields = [
+            'id',
+            'user',
+            'username',
+            'fill_no',
+            'passport_number',
+            'passport_detail',
+            'contact_no',
+            'visa_number',
+            'id_number',
+            'visa_date',
+            'mofa_number',
+            'passport_post_date',
+            'passport_return_date',
+            'created_at',
+            'updated_at'
+        ]
+        extra_kwargs = {
+            'user': {'required': False},
+            'fill_no': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'passport_number': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'contact_no': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'passport_detail': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'visa_number': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'id_number': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'visa_date': {'required': False, 'allow_null': True},
+            'mofa_number': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'passport_post_date': {'required': False, 'allow_null': True},
+            'passport_return_date': {'required': False, 'allow_null': True},
+        }

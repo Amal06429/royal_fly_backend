@@ -83,4 +83,30 @@ class Flight(models.Model):
 
     def __str__(self):
         return f"{self.departure_city} ({self.departure_code}) → {self.destination_city} ({self.destination_code})"
+
+
+# ========================================
+# VISA MODEL
+# ========================================
+class Visa(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='visas')
+    fill_no = models.CharField(max_length=100, blank=True, null=True)
+    passport_number = models.CharField(max_length=100, blank=True, null=True)
+    passport_detail = models.TextField(blank=True, null=True)
+    contact_no = models.CharField(max_length=20, blank=True, null=True)
+    visa_number = models.CharField(max_length=100, blank=True, null=True)
+    id_number = models.CharField(max_length=100, blank=True, null=True)
+    visa_date = models.DateField(blank=True, null=True)
+    mofa_number = models.CharField(max_length=100, blank=True, null=True)
+    passport_post_date = models.DateField(blank=True, null=True)
+    passport_return_date = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'visa'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.fill_no} - {self.passport_number}"
  

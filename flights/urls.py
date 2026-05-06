@@ -12,6 +12,10 @@ urlpatterns = [
     path('flights/<int:pk>/update/', views.update_flight, name='flight-update'),
     path('flights/<int:pk>/', views.delete_flight, name='flight-delete'),
     
+    # Visa endpoints
+    path('visas/', views.visa_list, name='visa-list-create'),
+    path('visas/<int:pk>/', views.visa_detail, name='visa-detail'),
+    
     # Dashboard endpoint
     path('dashboard/', views.DashboardAPIView.as_view(), name='dashboard'),
 ]
